@@ -36,10 +36,11 @@ canvas{display:block;width:100%;height:min(62vw,400px);min-height:320px;touch-ac
 .hidden{display:none!important}
 button{font:inherit;font-weight:600;border:0;border-radius:14px;padding:12px 22px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
 button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-.fb{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:3px solid var(--line);padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;font-size:.95rem}
+.fb{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:3px solid var(--line);padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;font-size:.92rem;max-height:75%;overflow:auto}
 .fb p{margin:0;flex:1 1 260px}
 .fb b.ok{color:var(--accent)}.fb b.no{color:var(--bad)}
 .hint{color:var(--muted);font-size:.9rem;margin-top:10px;text-align:center}
+.tools{display:flex;align-items:center;gap:10px;margin:10px 0 0;flex-wrap:wrap}.ghost{background:transparent;color:var(--ink);border:2px solid var(--accent);padding:8px 16px}.ghost:disabled{opacity:.45;cursor:not-allowed}.hintbox{flex:1 1 220px;background:var(--card);border:2px dashed var(--accent);border-radius:14px;padding:8px 12px;font-size:.95rem}.rule{background:rgba(127,214,168,.15);border:2px solid #7fd6a8;border-radius:14px;padding:10px 14px}
 </style>
 </head>
 <body>
@@ -49,12 +50,14 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
     <div class="hud"><span class="hearts" id="hearts" aria-label="Vidas"></span><span>Pontos: <span id="score">0</span></span></div>
   </header>
   <div class="q" id="question" aria-live="polite">Pronto para explorar as defesas das plantas?</div>
+  <div class="tools"><button class="ghost" id="hintBtn" disabled>💡 Dica (2)</button><div class="hintbox hidden" id="hintBox" aria-live="polite"></div></div>
   <div class="bar" aria-hidden="true"><i id="time"></i></div>
   <div class="stage">
     <canvas id="cv" aria-label="Campo de jogo com as respostas"></canvas>
     <div class="overlay" id="start">
       <h2>Defesas das Plantas</h2>
       <p>Uma pergunta sobre acúleos, espinhos, gloquídios, tricomas, fitólitos e cristais de oxalato de cálcio aparece. Clique na estrutura com a resposta certa antes que o tempo acabe. Você tem 3 vidas.</p>
+      <p class="rule"><b>💡 Regra das dicas:</b> você tem apenas <b>2 dicas</b> em todo o jogo. Toque no botão “Dica” quando quiser, mas escolha bem em quais perguntas usar!</p>
       <button id="go">Começar</button>
     </div>
     <div class="overlay hidden" id="end">
@@ -64,31 +67,31 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
     </div>
     <div class="fb hidden" id="fb"><p id="fbText"></p><button id="next">Próxima</button></div>
   </div>
-  <p class="hint">Dica: no teclado, use as teclas 1 a 4 para responder e Enter para avançar.</p>
+  <p class="hint">Dica: no teclado, use as teclas 1 a 4 para responder, H para pedir dica (só 2 no jogo todo) e Enter para avançar.</p>
 </div>
 
 <script>
-// Cada pergunta: [texto, [resposta certa, errada, errada, errada], curiosidade]
+// Cada pergunta: [texto, [certa, errada, errada, errada], justificativa da certa, dica, {errada: por que não é}]
 const Q=[
-["Qual estrutura, como a da roseira, é uma projeção pontiaguda da epiderma que se solta com facilidade?",["Acúleo","Espinho","Gloquídios","Tricomas"],"Os “espinhos” da rosa são, na verdade, acúleos: não têm vasos condutores e saem sem rasgar o caule."],
-["Qual estrutura pontiaguda vem de uma folha ou ramo modificado e possui tecido vascular?",["Espinho","Acúleo","Tricomas","Fitólitos"],"Por ter vasos, o espinho verdadeiro não se solta facilmente, como nos ramos espinhosos do limoeiro."],
-["Como se chamam os pequenos espinhos farpados, reunidos em tufos, das palmas do cacto Opuntia?",["Gloquídios","Espinho","Acúleo","Tricomas"],"Os gloquídios se soltam ao menor toque e ficam presos na pele pelas farpas."],
-["Como se chamam os “pelos” que se originam da epiderma das plantas?",["Tricomas","Acúleos","Gloquídios","Fitólitos"],"Os tricomas podem ser simples, ramificados ou glandulares, e dificultam a vida de pequenos herbívoros."],
-["Qual estrutura da urtiga injeta substâncias irritantes na pele de quem encosta?",["Tricomas","Acúleos","Espinhos","Gloquídios"],"Os tricomas urticantes quebram a ponta ao toque e liberam substâncias como a histamina."],
-["Quais corpos microscópicos de sílica tornam as folhas abrasivas, como as das gramíneas?",["Fitólitos","Cristais de oxalato de cálcio","Tricomas","Acúleos"],"Fitólito significa “pedra de planta”: eles endurecem os tecidos e reduzem a digestibilidade."],
-["De qual substância os fitólitos são formados?",["Sílica","Oxalato de cálcio","Celulose","Amido"],"A planta absorve ácido silícico do solo e o deposita nas células como sílica."],
-["Quais cristais, presentes na comigo-ninguém-pode, causam ardência na boca de quem a mastiga?",["Cristais de oxalato de cálcio","Fitólitos","Tricomas","Gloquídios"],"Os cristais perfuram a mucosa e ainda ajudam a liberar substâncias irritantes."],
-["Como se chamam os cristais de oxalato de cálcio em forma de agulha, agrupados em feixes?",["Ráfides","Drusas","Fitólitos","Gloquídios"],"Os feixes de ráfides ficam em células especiais e podem ser disparados como pequenas agulhas."],
-["Como se chamam os cristais de oxalato de cálcio agregados em forma de estrela?",["Drusas","Ráfides","Acúleos","Fitólitos"],"As drusas são comuns em folhas e cascas e deixam o tecido mais duro e menos palatável."],
-["Qual estrutura pode liberar óleos e substâncias tóxicas e ainda atrapalha o caminhar dos insetos na folha?",["Tricomas","Espinho","Fitólitos","Gloquídios"],"Os tricomas glandulares funcionam como pequenas fábricas de defesa química."],
-["Nos cactos, as estruturas pontiagudas das aréolas são folhas modificadas. Como se chamam?",["Espinhos","Acúleos","Fitólitos","Tricomas"],"Além de defender, os espinhos reduzem a perda de água e dão sombra ao caule."],
-["Os “espinhos” da roseira e da amora-preta são, na verdade, o quê?",["Acúleos","Espinhos verdadeiros","Fitólitos","Ráfides"],"Acúleos surgem da epiderma e das camadas logo abaixo dela, sem ligação com os vasos."],
-["Qual estrutura microscópica de sílica permanece no solo depois que a planta morre e ajuda arqueólogos?",["Fitólitos","Drusas","Ráfides","Tricomas"],"Por resistirem por milhares de anos, os fitólitos revelam quais plantas eram cultivadas."]
+["Qual estrutura pontiaguda da roseira se solta facilmente do caule?",["Acúleo","Espinho","Gloquídios","Tricomas"],"o acúleo nasce só das camadas externas da planta, sem vasos dentro, por isso se solta fácil. É o que chamamos de espinho da rosa.","Não tem vasos dentro e sai sem rasgar o caule.",{"Espinho":"o espinho verdadeiro é um ramo ou folha transformado, ligado aos vasos, e não sai fácil.","Gloquídios":"são tufos de espinhos minúsculos de cactos, e não pontas isoladas como as da roseira.","Tricomas":"são pelos, e não pontas duras como as da rosa."}],
+["Como se chamam os pelos das plantas?",["Tricomas","Acúleos","Fitólitos","Gloquídios"],"tricomas são pelos que nascem da epiderma e protegem a planta contra insetos e excesso de sol.","O nome vem do grego e significa cabelo.",{"Acúleos":"são pontas duras e pontudas, e não pelos.","Fitólitos":"são corpos microscópicos de sílica dentro das células, e não pelos.","Gloquídios":"são tufos de espinhos farpados de cactos, e não pelos comuns."}],
+["Os pelos da urtiga que queimam a pele são chamados de…",["Tricomas","Acúleos","Espinhos","Gloquídios"],"os pelos da urtiga são tricomas urticantes: ao encostar, a ponta quebra e solta substâncias que queimam a pele.","São pelos, não espinhos.",{"Acúleos":"são pontas duras da casca, como na rosa, e a urtiga queima por causa de pelos.","Espinhos":"são ramos ou folhas transformados e firmes, e a urtiga queima por pelos, não por espinhos.","Gloquídios":"são típicos de cactos e não ocorrem na urtiga."}],
+["Qual estrutura do cacto forma tufos de espinhos pequenos que grudam na pele?",["Gloquídios","Espinho","Acúleo","Tricomas"],"gloquídios são espinhos minúsculos e farpados, em tufos, típicos de cactos como a palma. Soltam-se fácil e ficam presos na pele.","Vem do grego glochis, que quer dizer ponta.",{"Espinho":"o espinho de cacto é maior e firme, e não se solta em tufos de farpas minúsculas.","Acúleo":"é uma ponta solta da casca, como na rosa, e não é típico de cactos.","Tricomas":"são pelos, e não espinhos com farpas."}],
+["Qual estrutura pontiaguda é uma folha ou um ramo transformado?",["Espinho","Acúleo","Tricomas","Fitólitos"],"o espinho verdadeiro vem de folha, ramo ou estípula transformados, com vasos dentro, por isso é firme e não se solta fácil.","Ele nasce de um órgão da planta que mudou de forma.",{"Acúleo":"nasce só das camadas externas, sem vasos, e não é um órgão transformado.","Tricomas":"são pelos da epiderma, e não folhas ou ramos transformados.","Fitólitos":"são corpos microscópicos de sílica, e não pontas visíveis."}],
+["Qual estrutura microscópica é feita de sílica e deixa as folhas ásperas?",["Fitólitos","Gloquídios","Acúleos","Tricomas"],"fitólitos são corpos microscópicos de sílica. Como a sílica é dura, eles deixam as folhas ásperas e abrasivas. O nome quer dizer pedra de planta.","É um corpinho duro, parecido com um cristal de vidro.",{"Gloquídios":"são espinhos farpados de cactos, e não são feitos de sílica.","Acúleos":"são pontas visíveis feitas de tecidos da planta, e não corpos microscópicos de sílica.","Tricomas":"são pelos da epiderma, e não corpos de sílica."}],
+["De qual material os fitólitos são feitos?",["Sílica","Oxalato de cálcio","Celulose","Amido"],"os fitólitos são feitos de sílica, que a planta absorve do solo e deposita nas células.","É a mesma substância encontrada na areia.",{"Oxalato de cálcio":"forma cristais como ráfides e drusas, que são outra defesa e não os fitólitos.","Celulose":"forma a parede das células e é macia, e não um mineral duro.","Amido":"é uma reserva de energia da planta, e não uma defesa mineral."}],
+["Qual cristal da comigo-ninguém-pode faz a boca arder?",["Cristais de oxalato de cálcio","Fitólitos","Tricomas","Acúleos"],"a comigo-ninguém-pode tem cristais de oxalato de cálcio em forma de agulha, que ferem a boca e causam ardência.","É um cristal de cálcio, pontudo como agulha.",{"Fitólitos":"são de sílica e não causam a ardência da comigo-ninguém-pode.","Tricomas":"são pelos, e a ardência vem de cristais dentro das células.","Acúleos":"são pontas na casca, e a ardência da comigo-ninguém-pode não vem deles."}],
+["Como se chamam os cristais de oxalato em forma de agulha?",["Ráfides","Drusas","Fitólitos","Gloquídios"],"ráfides são cristais de oxalato de cálcio em forma de agulha, reunidos em feixes dentro das células.","Parecem um feixe de agulhas.",{"Drusas":"são cristais de oxalato em forma de estrela, e não de agulha.","Fitólitos":"são de sílica, e não de oxalato.","Gloquídios":"são espinhos de cactos, e não cristais."}],
+["Como se chamam os cristais de oxalato em forma de estrela?",["Drusas","Ráfides","Acúleos","Fitólitos"],"drusas são cristais de oxalato de cálcio agrupados em forma de estrela ou de bola com pontas.","Parece uma estrela de pontas.",{"Ráfides":"são em forma de agulha, e não de estrela.","Acúleos":"são pontas visíveis da casca, e não cristais microscópicos.","Fitólitos":"são de sílica, e não de oxalato de cálcio."}],
+["Qual estrutura deixa o capim áspero e difícil de mastigar?",["Fitólitos","Gloquídios","Espinho","Acúleo"],"o capim tem muitos fitólitos de sílica, que o deixam áspero e desgastam os dentes de quem o come.","É um corpo de sílica muito pequeno.",{"Gloquídios":"ocorrem em cactos, e não no capim.","Espinho":"o capim não se defende com espinhos, e sim com sílica.","Acúleo":"não é a defesa do capim, que usa sílica."}],
+["Os “espinhos” da roseira são, na verdade…",["Acúleos","Espinhos verdadeiros","Fitólitos","Ráfides"],"os espinhos da roseira nascem das camadas externas e não têm vasos, então são acúleos e não espinhos verdadeiros.","Eles saem fácil, sem rasgar o caule.",{"Espinhos verdadeiros":"são ramos ou folhas transformados, com vasos, e a roseira não os tem.","Fitólitos":"são corpos microscópicos de sílica, e não pontas visíveis.","Ráfides":"são cristais de oxalato em forma de agulha, dentro das células."}],
+["Qual estrutura é um pelo que pode soltar substâncias tóxicas?",["Tricomas","Espinho","Ráfides","Drusas"],"tricomas glandulares são pelos com glândulas que liberam substâncias tóxicas ou irritantes.","É um pelo, e não uma ponta dura.",{"Espinho":"é uma ponta dura e firme, e não um pelo.","Ráfides":"são cristais dentro das células, e não pelos.","Drusas":"são cristais em forma de estrela, e não pelos."}],
+["O que o cacto usa para se defender no lugar das folhas?",["Espinhos","Fitólitos","Tricomas","Drusas"],"em muitos cactos as folhas viraram espinhos, que defendem a planta e ainda reduzem a perda de água.","São folhas pontudas e duras.",{"Fitólitos":"são microscópicos e não substituem as folhas.","Tricomas":"são pelos, e a folha do cacto virou espinho.","Drusas":"são cristais dentro das células, e não órgãos que substituem folhas."}]
 ];
 const TOTAL=10, TIME=15, COL=['#b8e04a','#ff8fa3','#ffc857','#a99bff'];
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d');
-let W=0,H=0,cells=[],parts=[],specks=[],order=[],idx=0,lives=3,score=0,streak=0,hits=0,timeLeft=TIME,phase='start',best=0,last=0;
+let hintsLeft=2,hintUsed=false,W=0,H=0,cells=[],parts=[],specks=[],order=[],idx=0,lives=3,score=0,streak=0,hits=0,timeLeft=TIME,phase='start',best=0,last=0;
 try{best=+localStorage.getItem('defesasplantas_best')||0}catch(e){}
 
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -121,17 +124,17 @@ function loadQuestion(){
     x:W*(.25+.5*(i%2))+(Math.random()-.5)*30,y:H*(.28+.44*(i>>1))+(Math.random()-.5)*20,
     vx:(Math.random()<.5?-1:1)*(30+Math.random()*35),vy:(Math.random()<.5?-1:1)*(30+Math.random()*35)}));
   $('question').textContent=`${idx+1}/${TOTAL}  ${q[0]}`;
-  timeLeft=TIME;phase='play';$('fb').classList.add('hidden');
+  timeLeft=TIME;phase='play';$('fb').classList.add('hidden');hintUsed=false;$('hintBox').classList.add('hidden');updHint();
 }
 function startGame(){
-  order=shuffle(Q.map((_,i)=>i)).slice(0,TOTAL);idx=0;lives=3;score=0;streak=0;hits=0;
+  order=shuffle(Q.map((_,i)=>i)).slice(0,TOTAL);idx=0;lives=3;score=0;streak=0;hits=0;hintsLeft=2;
   $('score').textContent=0;hearts();
   $('start').classList.add('hidden');$('end').classList.add('hidden');
   resize();loadQuestion();
 }
 function answer(i){
   if(phase!=='play')return;
-  phase='feedback';
+  phase='feedback';updHint();
   const ok=i>=0&&cells[i].ok;
   const now=performance.now();
   cells.forEach((c,k)=>{c.state=c.ok?'right':(k===i?'wrong':'dim');c.t0=now});
@@ -142,10 +145,11 @@ function answer(i){
     score+=gain;$('score').textContent=score;
     const c=cells.find(c=>c.ok);
     for(let n=0;n<28;n++){const a=Math.random()*6.28,s=60+Math.random()*160;parts.push({x:c.x,y:c.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,c:c.color})}
-    msg=`<b class="ok">Correto! +${gain}</b>${streak>1?` (sequência de ${streak})`:''} `;
+    msg=`<b class="ok">Correto! +${gain}</b>${streak>1?` (sequência de ${streak})`:''} Isso mesmo: `;
   }else{
     streak=0;lives--;hearts();
-    msg=`<b class="no">${i<0?'Tempo esgotado.':'Não foi dessa vez.'}</b> A resposta era ${cells.find(c=>c.ok).t}. `;
+    const qq=Q[order[idx]],right=cells.find(c=>c.ok).t;
+    msg=i<0?`<b class="no">Tempo esgotado.</b> A resposta era <b>${right}</b>: `:`<b class="no">Não foi dessa vez.</b> Não é <b>${cells[i].t}</b>, pois ${qq[4][cells[i].t]||''}<br>A resposta certa é <b>${right}</b>: `;
   }
   $('fbText').innerHTML=msg+Q[order[idx]][2];
   $('next').textContent=(lives<=0||idx+1>=TOTAL)?'Ver resultado':'Próxima';
@@ -305,18 +309,25 @@ function loop(now){
   step(dt);draw(now);requestAnimationFrame(loop);
 }
 
+function updHint(){const b=$('hintBtn');b.textContent=`💡 Dica (${hintsLeft})`;b.disabled=phase!=='play'||hintUsed||hintsLeft<=0}
+function useHint(){
+  if(phase!=='play'||hintUsed||hintsLeft<=0)return;
+  hintsLeft--;hintUsed=true;
+  const h=$('hintBox');h.textContent='💡 '+Q[order[idx]][3];h.classList.remove('hidden');updHint();
+}
 cv.addEventListener('pointerdown',e=>{
   if(phase!=='play')return;
   const b=cv.getBoundingClientRect(),x=(e.clientX-b.left)*W/b.width,y=(e.clientY-b.top)*H/b.height;
   for(let i=cells.length-1;i>=0;i--){if(Math.hypot(x-cells[i].x,y-cells[i].y)<=cells[i].r){answer(i);break}}
 });
 document.addEventListener('keydown',e=>{
-  if(['1','2','3','4'].includes(e.key))answer(+e.key-1);
+  if(e.key==='h'||e.key==='H')useHint();
+  else if(['1','2','3','4'].includes(e.key))answer(+e.key-1);
   else if((e.key==='Enter'||e.key===' ')&&phase==='feedback'){e.preventDefault();next()}
 });
-$('go').onclick=startGame;$('again').onclick=startGame;$('next').onclick=next;
+$('hintBtn').onclick=useHint;$('go').onclick=startGame;$('again').onclick=startGame;$('next').onclick=next;
 window.addEventListener('resize',resize);
-resize();hearts();requestAnimationFrame(loop);
+resize();hearts();updHint();requestAnimationFrame(loop);
 </script>
 </body>
 </html>
