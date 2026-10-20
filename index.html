@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0e2a38">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Caça-Células: quiz de biologia</title>
+<title>Defesas das Plantas: quiz de botânica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -27,8 +27,8 @@ h1{font-size:1.4rem;margin:0;font-weight:600}
 .bar i{display:block;height:100%;width:100%;background:var(--accent)}
 .bar i.low{background:var(--bad)}
 .stage{position:relative;border-radius:28px;overflow:hidden;background:radial-gradient(circle at 50% 40%,#17465a 0%,var(--lens) 70%);border:6px solid var(--line)}
-canvas{display:block;width:100%;height:min(62vw,380px);min-height:300px;touch-action:manipulation;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
-@media (max-width:600px){.wrap{padding:12px}canvas{height:min(112vw,470px)}.q{font-size:1.05rem}}
+canvas{display:block;width:100%;height:min(62vw,400px);min-height:320px;touch-action:manipulation;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+@media (max-width:600px){.wrap{padding:12px}canvas{height:min(115vw,500px)}.q{font-size:1.05rem}}
 @media (hover:none){.hint{display:none}}
 .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:20px;background:rgba(8,26,34,.88);color:#eef6f2}
 .overlay h2{margin:0;font-size:1.7rem}
@@ -45,16 +45,16 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 <body>
 <div class="wrap">
   <header>
-    <h1>Caça-Células</h1>
+    <h1>Defesas das Plantas</h1>
     <div class="hud"><span class="hearts" id="hearts" aria-label="Vidas"></span><span>Pontos: <span id="score">0</span></span></div>
   </header>
-  <div class="q" id="question" aria-live="polite">Pronto para o microscópio?</div>
+  <div class="q" id="question" aria-live="polite">Pronto para explorar as defesas das plantas?</div>
   <div class="bar" aria-hidden="true"><i id="time"></i></div>
   <div class="stage">
-    <canvas id="cv" aria-label="Campo do microscópio com as respostas"></canvas>
+    <canvas id="cv" aria-label="Campo de jogo com as respostas"></canvas>
     <div class="overlay" id="start">
-      <h2>Caça-Células</h2>
-      <p>Uma pergunta de biologia aparece. Clique na célula com a resposta certa antes que o tempo acabe. Você tem 3 vidas.</p>
+      <h2>Defesas das Plantas</h2>
+      <p>Uma pergunta sobre acúleos, espinhos, gloquídios, tricomas, fitólitos e cristais de oxalato de cálcio aparece. Clique na estrutura com a resposta certa antes que o tempo acabe. Você tem 3 vidas.</p>
       <button id="go">Começar</button>
     </div>
     <div class="overlay hidden" id="end">
@@ -70,31 +70,40 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 <script>
 // Cada pergunta: [texto, [resposta certa, errada, errada, errada], curiosidade]
 const Q=[
-["Qual organela é a “usina de energia” da célula?",["Mitocôndria","Ribossomo","Lisossomo","Vacúolo"],"As mitocôndrias produzem ATP, a energia que a célula usa."],
-["Como se chama o processo em que as plantas produzem glicose usando luz?",["Fotossíntese","Respiração","Fermentação","Digestão"],"Além de glicose, a fotossíntese libera oxigênio."],
-["Qual molécula guarda a informação genética?",["DNA","ATP","Glicose","Lipídio"],"O DNA tem a forma de uma dupla hélice."],
-["Qual tipo de célula não tem núcleo definido?",["Procarionte","Eucarionte","Muscular","Nervosa"],"As bactérias são procariontes."],
-["Qual é o pigmento verde das plantas?",["Clorofila","Hemoglobina","Melanina","Caroteno"],"A clorofila fica nos cloroplastos e captura a luz."],
-["Qual é a unidade básica da vida?",["Célula","Átomo","Tecido","Órgão"],"Todo ser vivo é feito de uma ou mais células."],
-["O que os glóbulos vermelhos transportam?",["Oxigênio","Anticorpos","Hormônios","Vitaminas"],"Eles carregam oxigênio graças à hemoglobina."],
-["Quantos cromossomos tem uma célula humana comum?",["46","23","48","44"],"São 23 pares: metade vem da mãe e metade do pai."],
-["Como se chamam os seres que produzem o próprio alimento?",["Autótrofos","Heterótrofos","Decompositores","Parasitas"],"Plantas e algas são autótrofas."],
-["Onde as proteínas são fabricadas na célula?",["Ribossomos","Lisossomos","Centríolos","Vacúolos"],"Os ribossomos leem o RNA para montar proteínas."],
-["Quem propôs a teoria da seleção natural?",["Charles Darwin","Gregor Mendel","Louis Pasteur","Lamarck"],"Darwin publicou “A Origem das Espécies” em 1859."],
-["Quem é considerado o pai da genética, por seus estudos com ervilhas?",["Mendel","Darwin","Watson","Pasteur"],"Mendel descobriu padrões de herança cruzando ervilhas."],
-["Qual gás as plantas absorvem na fotossíntese?",["Gás carbônico","Oxigênio","Nitrogênio","Hidrogênio"],"Elas pegam o CO₂ do ar pelos estômatos das folhas."],
-["Quem fica na base de uma cadeia alimentar?",["Produtores","Predadores","Consumidores","Carnívoros"],"Os produtores fazem fotossíntese e alimentam todo o resto."],
-["Qual organela tem enzimas para digerir substâncias?",["Lisossomo","Mitocôndria","Cloroplasto","Núcleo"],"O lisossomo funciona como o “estômago” da célula."],
-["Qual órgão bombeia o sangue pelo corpo?",["Coração","Pulmão","Fígado","Rim"],"O coração bate em média mais de 100 mil vezes por dia."]
+["Qual estrutura, como a da roseira, é uma projeção pontiaguda da epiderma que se solta com facilidade?",["Acúleo","Espinho","Gloquídios","Tricomas"],"Os “espinhos” da rosa são, na verdade, acúleos: não têm vasos condutores e saem sem rasgar o caule."],
+["Qual estrutura pontiaguda vem de uma folha ou ramo modificado e possui tecido vascular?",["Espinho","Acúleo","Tricomas","Fitólitos"],"Por ter vasos, o espinho verdadeiro não se solta facilmente, como nos ramos espinhosos do limoeiro."],
+["Como se chamam os pequenos espinhos farpados, reunidos em tufos, das palmas do cacto Opuntia?",["Gloquídios","Espinho","Acúleo","Tricomas"],"Os gloquídios se soltam ao menor toque e ficam presos na pele pelas farpas."],
+["Como se chamam os “pelos” que se originam da epiderma das plantas?",["Tricomas","Acúleos","Gloquídios","Fitólitos"],"Os tricomas podem ser simples, ramificados ou glandulares, e dificultam a vida de pequenos herbívoros."],
+["Qual estrutura da urtiga injeta substâncias irritantes na pele de quem encosta?",["Tricomas","Acúleos","Espinhos","Gloquídios"],"Os tricomas urticantes quebram a ponta ao toque e liberam substâncias como a histamina."],
+["Quais corpos microscópicos de sílica tornam as folhas abrasivas, como as das gramíneas?",["Fitólitos","Cristais de oxalato de cálcio","Tricomas","Acúleos"],"Fitólito significa “pedra de planta”: eles endurecem os tecidos e reduzem a digestibilidade."],
+["De qual substância os fitólitos são formados?",["Sílica","Oxalato de cálcio","Celulose","Amido"],"A planta absorve ácido silícico do solo e o deposita nas células como sílica."],
+["Quais cristais, presentes na comigo-ninguém-pode, causam ardência na boca de quem a mastiga?",["Cristais de oxalato de cálcio","Fitólitos","Tricomas","Gloquídios"],"Os cristais perfuram a mucosa e ainda ajudam a liberar substâncias irritantes."],
+["Como se chamam os cristais de oxalato de cálcio em forma de agulha, agrupados em feixes?",["Ráfides","Drusas","Fitólitos","Gloquídios"],"Os feixes de ráfides ficam em células especiais e podem ser disparados como pequenas agulhas."],
+["Como se chamam os cristais de oxalato de cálcio agregados em forma de estrela?",["Drusas","Ráfides","Acúleos","Fitólitos"],"As drusas são comuns em folhas e cascas e deixam o tecido mais duro e menos palatável."],
+["Qual estrutura pode liberar óleos e substâncias tóxicas e ainda atrapalha o caminhar dos insetos na folha?",["Tricomas","Espinho","Fitólitos","Gloquídios"],"Os tricomas glandulares funcionam como pequenas fábricas de defesa química."],
+["Nos cactos, as estruturas pontiagudas das aréolas são folhas modificadas. Como se chamam?",["Espinhos","Acúleos","Fitólitos","Tricomas"],"Além de defender, os espinhos reduzem a perda de água e dão sombra ao caule."],
+["Os “espinhos” da roseira e da amora-preta são, na verdade, o quê?",["Acúleos","Espinhos verdadeiros","Fitólitos","Ráfides"],"Acúleos surgem da epiderma e das camadas logo abaixo dela, sem ligação com os vasos."],
+["Qual estrutura microscópica de sílica permanece no solo depois que a planta morre e ajuda arqueólogos?",["Fitólitos","Drusas","Ráfides","Tricomas"],"Por resistirem por milhares de anos, os fitólitos revelam quais plantas eram cultivadas."]
 ];
 const TOTAL=10, TIME=15, COL=['#b8e04a','#ff8fa3','#ffc857','#a99bff'];
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d');
 let W=0,H=0,cells=[],parts=[],specks=[],order=[],idx=0,lives=3,score=0,streak=0,hits=0,timeLeft=TIME,phase='start',best=0,last=0;
-try{best=+localStorage.getItem('cacacelulas_best')||0}catch(e){}
+try{best=+localStorage.getItem('defesasplantas_best')||0}catch(e){}
 
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function radius(){return Math.max(38,Math.min(64,W/7.5))}
+function radius(){return Math.max(44,Math.min(72,W/6.6))}
+function shapeOf(t){const s=t.toLowerCase();
+  if(s.includes('oxalato'))return 'cristal';
+  if(s.includes('ráfide'))return 'rafide';
+  if(s.includes('druse'))return 'drusa';
+  if(s.includes('fitólito')||s.includes('sílica'))return 'fitolito';
+  if(s.includes('gloqu'))return 'gloquidio';
+  if(s.includes('acúleo'))return 'aculeo';
+  if(s.includes('espinho'))return 'espinho';
+  if(s.includes('tricoma'))return 'tricoma';
+  return 'plain'}
+const BR={espinho:.66,aculeo:.78,gloquidio:.7,tricoma:.74,rafide:.72,cristal:.74,fitolito:.8,drusa:.76,plain:.95};
 function resize(){
   const d=window.devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;
   cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);
@@ -108,6 +117,7 @@ function loadQuestion(){
   const opts=shuffle(q[1].map((t,i)=>({t,ok:i===0})));
   cells=opts.map((o,i)=>({
     t:o.t,ok:o.ok,color:COL[i],r:radius(),state:'idle',ph:Math.random()*6,t0:0,
+    shape:shapeOf(o.t),rot:Math.random()*6.28,rv:(Math.random()-.5)*.6,jit:Array.from({length:40},Math.random),
     x:W*(.25+.5*(i%2))+(Math.random()-.5)*30,y:H*(.28+.44*(i>>1))+(Math.random()-.5)*20,
     vx:(Math.random()<.5?-1:1)*(30+Math.random()*35),vy:(Math.random()<.5?-1:1)*(30+Math.random()*35)}));
   $('question').textContent=`${idx+1}/${TOTAL}  ${q[0]}`;
@@ -149,8 +159,8 @@ function next(){
 function finish(){
   phase='end';$('fb').classList.add('hidden');
   const won=lives>0;
-  if(score>best){best=score;try{localStorage.setItem('cacacelulas_best',best)}catch(e){}}
-  $('endTitle').textContent=won?'Laboratório concluído!':'Fim de jogo';
+  if(score>best){best=score;try{localStorage.setItem('defesasplantas_best',best)}catch(e){}}
+  $('endTitle').textContent=won?'Jardim protegido!':'Fim de jogo';
   $('endText').textContent=`Você acertou ${hits} de ${TOTAL} e fez ${score} pontos. Melhor pontuação neste aparelho: ${best}.`;
   $('end').classList.remove('hidden');
 }
@@ -165,7 +175,7 @@ function step(dt){
   if(phase==='end'||phase==='start'&&!cells.length)return;
   const move=phase==='play'?1:.25;
   cells.forEach(c=>{
-    c.x+=c.vx*dt*move;c.y+=c.vy*dt*move;
+    c.x+=c.vx*dt*move;c.y+=c.vy*dt*move;c.rot+=c.rv*dt*move;
     if(c.x<c.r){c.x=c.r;c.vx=Math.abs(c.vx)}if(c.x>W-c.r){c.x=W-c.r;c.vx=-Math.abs(c.vx)}
     if(c.y<c.r){c.y=c.r;c.vy=Math.abs(c.vy)}if(c.y>H-c.r){c.y=H-c.r;c.vy=-Math.abs(c.vy)}
   });
@@ -179,28 +189,106 @@ function step(dt){
     }
   }
 }
+
+// ---------- desenho das estruturas (coordenadas locais, origem no centro) ----------
+function P(a,r){return[Math.cos(a)*r,Math.sin(a)*r]}
+function ln(p,q){ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke()}
+function spike(a,r0,r1,w){
+  const p1=P(a-w,r0),p2=P(a,r1),p3=P(a+w,r0);
+  ctx.beginPath();ctx.moveTo(...p1);ctx.lineTo(...p2);ctx.lineTo(...p3);ctx.closePath();ctx.fill();ctx.stroke();
+}
+function needles(c,R,n,spread,base){
+  for(let i=0;i<n;i++){
+    const p=(c.jit[i]-.5)*R*1.1,a=base+(c.jit[i+10]-.5)*spread,L=Math.sqrt(Math.max(R*R-p*p,0))*.98;
+    const ox=-Math.sin(a)*p,oy=Math.cos(a)*p,dx=Math.cos(a)*L,dy=Math.sin(a)*L;
+    ctx.beginPath();ctx.moveTo(ox-dx,oy-dy);ctx.lineTo(ox+dx,oy+dy);
+    ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=4;ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.92)';ctx.lineWidth=2;ctx.stroke();
+  }
+}
+function decor(c,R){
+  const s=c.shape,j=c.jit,br=(BR[s]||.9)*R;
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.fillStyle=c.color;ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=2;
+  if(s==='espinho'){
+    for(let i=0;i<7;i++)spike(i/7*6.283+(j[i]-.5)*.25,br*.85,R,.2);
+  }else if(s==='aculeo'){
+    for(let i=0;i<10;i++){
+      const a=i/10*6.283+(j[i]-.5)*.2,m=(br+R)/2;
+      ctx.beginPath();ctx.moveTo(...P(a-.16,br*.97));
+      ctx.quadraticCurveTo(...P(a+.02,m),...P(a+.4,R*.98));
+      ctx.quadraticCurveTo(...P(a+.22,m*.98),...P(a+.16,br*.97));
+      ctx.closePath();ctx.fill();ctx.stroke();
+    }
+  }else if(s==='gloquidio'){
+    ctx.strokeStyle=c.color;
+    for(let i=0;i<6;i++){
+      const a=i/6*6.283+(j[i]-.5)*.2,o=P(a,br*.9);
+      for(let k=-2;k<=2;k++){
+        const e=P(a+k*.2,R*(.98-Math.abs(k)*.02)),dx=e[0]-o[0],dy=e[1]-o[1],l=Math.hypot(dx,dy)||1;
+        ctx.lineWidth=1.8;ln(o,e);
+        const mx=o[0]+dx*.65,my=o[1]+dy*.65,bx=-dy/l*4,by=dx/l*4;
+        ctx.lineWidth=1.2;ln([mx-bx,my-by],[mx+bx,my+by]);
+      }
+    }
+  }else if(s==='tricoma'){
+    ctx.strokeStyle=c.color;ctx.lineWidth=1.8;
+    for(let i=0;i<26;i++){
+      const a=i/26*6.283,s0=P(a,br*.95),tip=P(a+(j[i]-.5)*.35,R*(.9+.1*j[(i+7)%40])),mid=P(a,(br+R)/2),sd=(i%2?1:-1)*R*.1;
+      ctx.beginPath();ctx.moveTo(...s0);ctx.quadraticCurveTo(mid[0]-Math.sin(a)*sd,mid[1]+Math.cos(a)*sd,...tip);ctx.stroke();
+    }
+  }else if(s==='rafide')needles(c,R,10,.35,.5);
+  else if(s==='cristal')needles(c,R,7,2.6,.5);
+}
+function bodyPath(c,R){
+  const s=c.shape,j=c.jit;ctx.beginPath();
+  if(s==='fitolito'){
+    for(let i=0;i<8;i++){const p=P(i/8*6.283+(j[i]-.5)*.4,R*(.8+.17*j[i+8]));i?ctx.lineTo(...p):ctx.moveTo(...p)}
+    ctx.closePath();
+  }else if(s==='drusa'){
+    for(let i=0;i<24;i++){const p=P(i/24*6.283,i%2?R*.66:R*(.94+.06*j[i]));i?ctx.lineTo(...p):ctx.moveTo(...p)}
+    ctx.closePath();
+  }else ctx.arc(0,0,(BR[s]||.9)*R,0,6.283);
+}
+function layout(c,R){
+  const bw=(BR[c.shape]||.9)*R*1.8,bh=(BR[c.shape]||.9)*R*1.55,words=c.t.split(' ');
+  const font=s=>`600 ${s}px Fredoka,"Trebuchet MS",sans-serif`;
+  let fs=R*.4,lines;
+  for(;;){
+    ctx.font=font(fs);lines=[];let cur='';
+    words.forEach(w=>{const t=cur?cur+' '+w:w;if(cur&&ctx.measureText(t).width>bw){lines.push(cur);cur=w}else cur=t});
+    lines.push(cur);
+    if(fs<=9||(Math.max(...lines.map(l=>ctx.measureText(l).width))<=bw&&lines.length*fs*1.15<=bh))break;
+    fs-=.5;
+  }
+  return{lines,fs};
+}
 function drawCell(c,now){
   const wob=1+Math.sin(now/400+c.ph)*.03;
-  let x=c.x,y=c.y,r=c.r*wob,alpha=1;
+  let x=c.x,y=c.y,R=c.r*wob,alpha=1;
   if(c.state==='wrong'&&now-c.t0<600)x+=Math.sin(now/30)*5;
   if(c.state==='dim')alpha=.3;
-  if(c.state==='right')r*=1.08;
-  ctx.globalAlpha=alpha;
+  if(c.state==='right')R*=1.08;
+  ctx.globalAlpha=alpha;ctx.save();ctx.translate(x,y);ctx.rotate(c.rot);
   if(c.state==='right'){ctx.shadowColor='#ffffff';ctx.shadowBlur=26}
-  ctx.beginPath();ctx.arc(x,y,r,0,6.283);ctx.fillStyle=c.color;ctx.fill();
-  ctx.shadowBlur=0;
-  const g=ctx.createRadialGradient(x-r*.35,y-r*.4,r*.1,x,y,r);
+  decor(c,R);
+  bodyPath(c,R);ctx.fillStyle=c.color;ctx.fill();ctx.shadowBlur=0;
+  const cs=Math.cos(-c.rot),sn=Math.sin(-c.rot),gx=-R*.35*cs+R*.4*sn,gy=-R*.35*sn-R*.4*cs;
+  const g=ctx.createRadialGradient(gx,gy,R*.1,0,0,R);
   g.addColorStop(0,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=g;ctx.fill();
   ctx.lineWidth=c.state==='right'?5:3;
   ctx.strokeStyle=c.state==='right'?'#ffffff':c.state==='wrong'?'#e0344f':'rgba(0,0,0,.25)';
   ctx.stroke();
-  const words=c.t.split(' ');let fs=r*.36;
-  const font=s=>`600 ${s}px Fredoka,"Trebuchet MS",sans-serif`;
-  ctx.font=font(fs);
-  while(fs>9&&Math.max(...words.map(w=>ctx.measureText(w).width))>r*1.6){fs-=.5;ctx.font=font(fs)}
+  if(c.shape==='fitolito'||c.shape==='drusa'){
+    ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1.5;
+    if(c.shape==='fitolito')for(let k=0;k<3;k++){const a=k*1.05+c.jit[k];ln(P(a,R*.7),P(a+3.14,R*.7))}
+    else for(let k=0;k<12;k++)ln([0,0],P(k/12*6.283,R*.62));
+  }
+  ctx.restore();
+  const {lines,fs}=layout(c,R);
+  ctx.font=`600 ${fs}px Fredoka,"Trebuchet MS",sans-serif`;
   ctx.fillStyle='#10222c';ctx.textAlign='center';ctx.textBaseline='middle';
-  words.forEach((w,k)=>ctx.fillText(w,x,y+(k-(words.length-1)/2)*fs*1.15));
+  lines.forEach((w,k)=>ctx.fillText(w,x,y+(k-(lines.length-1)/2)*fs*1.15));
   ctx.globalAlpha=1;
 }
 function draw(now){
