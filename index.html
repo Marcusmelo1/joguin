@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e2a38">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Caça-Células: quiz de biologia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e6f0ec;--ink:#12303a;--card:#ffffff;--muted:#4a6670;--accent:#1f7a58;--accent-ink:#ffffff;--bad:#b3304a;--lens:#0e2a38;--line:#c5d9d1;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#081a22;--ink:#e8f4ef;--card:#102d3a;--muted:#9fbdc4;--accent:#7fd6a8;--accent-ink:#08231a;--bad:#ff8fa3;--lens:#0a2230;--line:#1f4352}}
+:root[data-theme="dark"]{--bg:#081a22;--ink:#e8f4ef;--card:#102d3a;--muted:#9fbdc4;--accent:#7fd6a8;--accent-ink:#08231a;--bad:#ff8fa3;--lens:#0a2230;--line:#1f4352}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif;line-height:1.4}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+h1{font-size:1.4rem;margin:0;font-weight:600}
+.hud{display:flex;gap:16px;align-items:center;font-weight:600}
+.hearts{color:var(--bad);letter-spacing:2px;font-size:1.2rem}
+.q{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px 16px;font-size:1.15rem;font-weight:600;min-height:4.2em;display:flex;align-items:center}
+.bar{height:8px;background:var(--line);border-radius:8px;margin:10px 0;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:var(--accent)}
+.bar i.low{background:var(--bad)}
+.stage{position:relative;border-radius:28px;overflow:hidden;background:radial-gradient(circle at 50% 40%,#17465a 0%,var(--lens) 70%);border:6px solid var(--line)}
+canvas{display:block;width:100%;height:min(62vw,380px);min-height:300px;touch-action:manipulation;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+@media (max-width:600px){.wrap{padding:12px}canvas{height:min(112vw,470px)}.q{font-size:1.05rem}}
+@media (hover:none){.hint{display:none}}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:20px;background:rgba(8,26,34,.88);color:#eef6f2}
+.overlay h2{margin:0;font-size:1.7rem}
+.overlay p{margin:0;max-width:30em}
+.hidden{display:none!important}
+button{font:inherit;font-weight:600;border:0;border-radius:14px;padding:12px 22px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.fb{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:3px solid var(--line);padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;font-size:.95rem}
+.fb p{margin:0;flex:1 1 260px}
+.fb b.ok{color:var(--accent)}.fb b.no{color:var(--bad)}
+.hint{color:var(--muted);font-size:.9rem;margin-top:10px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Caça-Células</h1>
+    <div class="hud"><span class="hearts" id="hearts" aria-label="Vidas"></span><span>Pontos: <span id="score">0</span></span></div>
+  </header>
+  <div class="q" id="question" aria-live="polite">Pronto para o microscópio?</div>
+  <div class="bar" aria-hidden="true"><i id="time"></i></div>
+  <div class="stage">
+    <canvas id="cv" aria-label="Campo do microscópio com as respostas"></canvas>
+    <div class="overlay" id="start">
+      <h2>Caça-Células</h2>
+      <p>Uma pergunta de biologia aparece. Clique na célula com a resposta certa antes que o tempo acabe. Você tem 3 vidas.</p>
+      <button id="go">Começar</button>
+    </div>
+    <div class="overlay hidden" id="end">
+      <h2 id="endTitle"></h2>
+      <p id="endText"></p>
+      <button id="again">Jogar de novo</button>
+    </div>
+    <div class="fb hidden" id="fb"><p id="fbText"></p><button id="next">Próxima</button></div>
+  </div>
+  <p class="hint">Dica: no teclado, use as teclas 1 a 4 para responder e Enter para avançar.</p>
+</div>
+
+<script>
+// Cada pergunta: [texto, [resposta certa, errada, errada, errada], curiosidade]
+const Q=[
+["Qual organela é a “usina de energia” da célula?",["Mitocôndria","Ribossomo","Lisossomo","Vacúolo"],"As mitocôndrias produzem ATP, a energia que a célula usa."],
+["Como se chama o processo em que as plantas produzem glicose usando luz?",["Fotossíntese","Respiração","Fermentação","Digestão"],"Além de glicose, a fotossíntese libera oxigênio."],
+["Qual molécula guarda a informação genética?",["DNA","ATP","Glicose","Lipídio"],"O DNA tem a forma de uma dupla hélice."],
+["Qual tipo de célula não tem núcleo definido?",["Procarionte","Eucarionte","Muscular","Nervosa"],"As bactérias são procariontes."],
+["Qual é o pigmento verde das plantas?",["Clorofila","Hemoglobina","Melanina","Caroteno"],"A clorofila fica nos cloroplastos e captura a luz."],
+["Qual é a unidade básica da vida?",["Célula","Átomo","Tecido","Órgão"],"Todo ser vivo é feito de uma ou mais células."],
+["O que os glóbulos vermelhos transportam?",["Oxigênio","Anticorpos","Hormônios","Vitaminas"],"Eles carregam oxigênio graças à hemoglobina."],
+["Quantos cromossomos tem uma célula humana comum?",["46","23","48","44"],"São 23 pares: metade vem da mãe e metade do pai."],
+["Como se chamam os seres que produzem o próprio alimento?",["Autótrofos","Heterótrofos","Decompositores","Parasitas"],"Plantas e algas são autótrofas."],
+["Onde as proteínas são fabricadas na célula?",["Ribossomos","Lisossomos","Centríolos","Vacúolos"],"Os ribossomos leem o RNA para montar proteínas."],
+["Quem propôs a teoria da seleção natural?",["Charles Darwin","Gregor Mendel","Louis Pasteur","Lamarck"],"Darwin publicou “A Origem das Espécies” em 1859."],
+["Quem é considerado o pai da genética, por seus estudos com ervilhas?",["Mendel","Darwin","Watson","Pasteur"],"Mendel descobriu padrões de herança cruzando ervilhas."],
+["Qual gás as plantas absorvem na fotossíntese?",["Gás carbônico","Oxigênio","Nitrogênio","Hidrogênio"],"Elas pegam o CO₂ do ar pelos estômatos das folhas."],
+["Quem fica na base de uma cadeia alimentar?",["Produtores","Predadores","Consumidores","Carnívoros"],"Os produtores fazem fotossíntese e alimentam todo o resto."],
+["Qual organela tem enzimas para digerir substâncias?",["Lisossomo","Mitocôndria","Cloroplasto","Núcleo"],"O lisossomo funciona como o “estômago” da célula."],
+["Qual órgão bombeia o sangue pelo corpo?",["Coração","Pulmão","Fígado","Rim"],"O coração bate em média mais de 100 mil vezes por dia."]
+];
+const TOTAL=10, TIME=15, COL=['#b8e04a','#ff8fa3','#ffc857','#a99bff'];
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d');
+let W=0,H=0,cells=[],parts=[],specks=[],order=[],idx=0,lives=3,score=0,streak=0,hits=0,timeLeft=TIME,phase='start',best=0,last=0;
+try{best=+localStorage.getItem('cacacelulas_best')||0}catch(e){}
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function radius(){return Math.max(38,Math.min(64,W/7.5))}
+function resize(){
+  const d=window.devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;
+  cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);
+  cells.forEach(c=>{c.r=radius();c.x=Math.min(Math.max(c.x,c.r),W-c.r);c.y=Math.min(Math.max(c.y,c.r),H-c.r)});
+  specks=Array.from({length:16},()=>({x:Math.random()*W,y:Math.random()*H,r:2+Math.random()*4,vx:(Math.random()-.5)*10,vy:(Math.random()-.5)*10}));
+}
+function hearts(){$('hearts').textContent='♥'.repeat(lives)+'♡'.repeat(3-lives)}
+
+function loadQuestion(){
+  const q=Q[order[idx]];
+  const opts=shuffle(q[1].map((t,i)=>({t,ok:i===0})));
+  cells=opts.map((o,i)=>({
+    t:o.t,ok:o.ok,color:COL[i],r:radius(),state:'idle',ph:Math.random()*6,t0:0,
+    x:W*(.25+.5*(i%2))+(Math.random()-.5)*30,y:H*(.28+.44*(i>>1))+(Math.random()-.5)*20,
+    vx:(Math.random()<.5?-1:1)*(30+Math.random()*35),vy:(Math.random()<.5?-1:1)*(30+Math.random()*35)}));
+  $('question').textContent=`${idx+1}/${TOTAL}  ${q[0]}`;
+  timeLeft=TIME;phase='play';$('fb').classList.add('hidden');
+}
+function startGame(){
+  order=shuffle(Q.map((_,i)=>i)).slice(0,TOTAL);idx=0;lives=3;score=0;streak=0;hits=0;
+  $('score').textContent=0;hearts();
+  $('start').classList.add('hidden');$('end').classList.add('hidden');
+  resize();loadQuestion();
+}
+function answer(i){
+  if(phase!=='play')return;
+  phase='feedback';
+  const ok=i>=0&&cells[i].ok;
+  const now=performance.now();
+  cells.forEach((c,k)=>{c.state=c.ok?'right':(k===i?'wrong':'dim');c.t0=now});
+  let msg;
+  if(ok){
+    streak++;hits++;
+    const gain=100+Math.round(timeLeft*5)+(streak>1?(streak-1)*20:0);
+    score+=gain;$('score').textContent=score;
+    const c=cells.find(c=>c.ok);
+    for(let n=0;n<28;n++){const a=Math.random()*6.28,s=60+Math.random()*160;parts.push({x:c.x,y:c.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,c:c.color})}
+    msg=`<b class="ok">Correto! +${gain}</b>${streak>1?` (sequência de ${streak})`:''} `;
+  }else{
+    streak=0;lives--;hearts();
+    msg=`<b class="no">${i<0?'Tempo esgotado.':'Não foi dessa vez.'}</b> A resposta era ${cells.find(c=>c.ok).t}. `;
+  }
+  $('fbText').innerHTML=msg+Q[order[idx]][2];
+  $('next').textContent=(lives<=0||idx+1>=TOTAL)?'Ver resultado':'Próxima';
+  $('fb').classList.remove('hidden');
+}
+function next(){
+  if(phase!=='feedback')return;
+  if(lives<=0||idx+1>=TOTAL){finish();return}
+  idx++;loadQuestion();
+}
+function finish(){
+  phase='end';$('fb').classList.add('hidden');
+  const won=lives>0;
+  if(score>best){best=score;try{localStorage.setItem('cacacelulas_best',best)}catch(e){}}
+  $('endTitle').textContent=won?'Laboratório concluído!':'Fim de jogo';
+  $('endText').textContent=`Você acertou ${hits} de ${TOTAL} e fez ${score} pontos. Melhor pontuação neste aparelho: ${best}.`;
+  $('end').classList.remove('hidden');
+}
+
+function step(dt){
+  specks.forEach(s=>{s.x=(s.x+s.vx*dt+W)%W;s.y=(s.y+s.vy*dt+H)%H});
+  parts=parts.filter(p=>(p.life-=dt*1.1)>0);
+  parts.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.97;p.vy*=.97});
+  if(phase==='play'){
+    timeLeft-=dt;if(timeLeft<=0){timeLeft=0;answer(-1)}
+  }
+  if(phase==='end'||phase==='start'&&!cells.length)return;
+  const move=phase==='play'?1:.25;
+  cells.forEach(c=>{
+    c.x+=c.vx*dt*move;c.y+=c.vy*dt*move;
+    if(c.x<c.r){c.x=c.r;c.vx=Math.abs(c.vx)}if(c.x>W-c.r){c.x=W-c.r;c.vx=-Math.abs(c.vx)}
+    if(c.y<c.r){c.y=c.r;c.vy=Math.abs(c.vy)}if(c.y>H-c.r){c.y=H-c.r;c.vy=-Math.abs(c.vy)}
+  });
+  for(let a=0;a<cells.length;a++)for(let b=a+1;b<cells.length;b++){
+    const p=cells[a],q=cells[b],dx=q.x-p.x,dy=q.y-p.y,d=Math.hypot(dx,dy)||1,m=p.r+q.r;
+    if(d<m){
+      const nx=dx/d,ny=dy/d,o=(m-d)/2;
+      p.x-=nx*o;p.y-=ny*o;q.x+=nx*o;q.y+=ny*o;
+      const rv=(q.vx-p.vx)*nx+(q.vy-p.vy)*ny;
+      if(rv<0){p.vx+=rv*nx;p.vy+=rv*ny;q.vx-=rv*nx;q.vy-=rv*ny}
+    }
+  }
+}
+function drawCell(c,now){
+  const wob=1+Math.sin(now/400+c.ph)*.03;
+  let x=c.x,y=c.y,r=c.r*wob,alpha=1;
+  if(c.state==='wrong'&&now-c.t0<600)x+=Math.sin(now/30)*5;
+  if(c.state==='dim')alpha=.3;
+  if(c.state==='right')r*=1.08;
+  ctx.globalAlpha=alpha;
+  if(c.state==='right'){ctx.shadowColor='#ffffff';ctx.shadowBlur=26}
+  ctx.beginPath();ctx.arc(x,y,r,0,6.283);ctx.fillStyle=c.color;ctx.fill();
+  ctx.shadowBlur=0;
+  const g=ctx.createRadialGradient(x-r*.35,y-r*.4,r*.1,x,y,r);
+  g.addColorStop(0,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g;ctx.fill();
+  ctx.lineWidth=c.state==='right'?5:3;
+  ctx.strokeStyle=c.state==='right'?'#ffffff':c.state==='wrong'?'#e0344f':'rgba(0,0,0,.25)';
+  ctx.stroke();
+  const words=c.t.split(' ');let fs=r*.36;
+  const font=s=>`600 ${s}px Fredoka,"Trebuchet MS",sans-serif`;
+  ctx.font=font(fs);
+  while(fs>9&&Math.max(...words.map(w=>ctx.measureText(w).width))>r*1.6){fs-=.5;ctx.font=font(fs)}
+  ctx.fillStyle='#10222c';ctx.textAlign='center';ctx.textBaseline='middle';
+  words.forEach((w,k)=>ctx.fillText(w,x,y+(k-(words.length-1)/2)*fs*1.15));
+  ctx.globalAlpha=1;
+}
+function draw(now){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='rgba(180,230,220,.14)';
+  specks.forEach(s=>{ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.283);ctx.fill()});
+  cells.forEach(c=>drawCell(c,now));
+  parts.forEach(p=>{ctx.globalAlpha=Math.max(p.life,0);ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,4,0,6.283);ctx.fill()});
+  ctx.globalAlpha=1;
+  const t=$('time');t.style.width=(timeLeft/TIME*100)+'%';t.classList.toggle('low',timeLeft<5);
+}
+function loop(now){
+  const dt=Math.min((now-last)/1000||0,.05);last=now;
+  step(dt);draw(now);requestAnimationFrame(loop);
+}
+
+cv.addEventListener('pointerdown',e=>{
+  if(phase!=='play')return;
+  const b=cv.getBoundingClientRect(),x=(e.clientX-b.left)*W/b.width,y=(e.clientY-b.top)*H/b.height;
+  for(let i=cells.length-1;i>=0;i--){if(Math.hypot(x-cells[i].x,y-cells[i].y)<=cells[i].r){answer(i);break}}
+});
+document.addEventListener('keydown',e=>{
+  if(['1','2','3','4'].includes(e.key))answer(+e.key-1);
+  else if((e.key==='Enter'||e.key===' ')&&phase==='feedback'){e.preventDefault();next()}
+});
+$('go').onclick=startGame;$('again').onclick=startGame;$('next').onclick=next;
+window.addEventListener('resize',resize);
+resize();hearts();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
